@@ -2,9 +2,9 @@
 
 import 'package:dart_api_query_package/src/parse.dart';
 
-class Query {
+abstract class Query {
   var model;
-  late String baseUrl;
+  var baseUrl;
   var queryParameters;
   var options = {};
   var include;
@@ -19,7 +19,7 @@ class Query {
 
   Query([options]) {
     model = null;
-    baseUrl = '';
+    baseUrl = null;
     queryParameters = {
       'filters': 'filter',
       'fields': 'fields',
@@ -40,12 +40,6 @@ class Query {
     paramsObj = null;
 
     parser = Parser(this);
-  }
-
-  target(model) {
-    this.model = model;
-
-    return this;
   }
 
   get() {

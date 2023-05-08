@@ -1,7 +1,7 @@
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-import 'dummy/post.dart';
+import 'dummy/pizza.dart';
 
 void main() {
   group('query_builder_tests', () {
@@ -18,20 +18,10 @@ void main() {
       }
     });
 
-    test('bad model', () {
-      query.appends(['full_name', 'rating']);
-
-      final expected = '/pizza?append=full_name,rating';
-      print(query.url());
-
-      expect(query.url(), expected);
-    });
-
     test('build_ a query_with appends_method', () {
       query.appends(['full_name', 'rating']);
 
-      final expected = '/pizza?append=full_name,rating';
-      print(query.url());
+      final expected = 'http://127.0.0.1:8000/pizza?append=full_name,rating';
 
       expect(query.url(), expected);
     });
@@ -48,7 +38,7 @@ void main() {
     test('build_query_with_includes', () {
       query.includes('toppings');
 
-      final expected = '/pizza?includes=toppings';
+      final expected = 'http://127.0.0.1:8000/pizza?includes=toppings';
 
       expect(query.url(), expected);
     });
@@ -65,7 +55,17 @@ void main() {
     test('can_query_with_where', () {
       query.where('topping', 'cheese');
 
-      final expected = '/pizza?filter[topping]=cheese';
+      final expected = 'http://127.0.0.1:8000/pizza?filter[topping]=cheese';
+
+      expect(query.url(), expected);
+    });
+
+    test('can_query_with_more_where´s', () {
+      query.where('topping', 'cheese');
+      query.where('size', 'big');
+
+      final expected =
+          'http://127.0.0.1:8000/pizza?filter[topping]=cheese&filter[size]=big';
 
       expect(query.url(), expected);
     });
@@ -82,7 +82,8 @@ void main() {
     test('can_build_query_with_whereIn', () {
       query.whereIn('topping', ['beef', 'cheese']);
 
-      final expected = '/pizza?filter[topping]=beef,cheese';
+      final expected =
+          'http://127.0.0.1:8000/pizza?filter[topping]=beef,cheese';
 
       expect(query.url(), expected);
     });
@@ -117,7 +118,8 @@ void main() {
     test('can_build_a_query_with_select', () {
       query.select(['name', 'date_added']);
 
-      final expected = '/pizza?fields[pizza]=name,date_added';
+      final expected =
+          'http://127.0.0.1:8000/pizza?fields[pizza]=name,date_added';
 
       expect(query.url(), expected);
     });
@@ -125,7 +127,8 @@ void main() {
     test('build_query_with_select', () {
       query.select(['name', 'date_added']);
 
-      final expected = '/pizza?fields[pizza]=name,date_added';
+      final expected =
+          'http://127.0.0.1:8000/pizza?fields[pizza]=name,date_added';
       expect(query.url(), expected);
     });
 
@@ -150,7 +153,8 @@ void main() {
     test('can_limit_the_query', () {
       query.where('name', 'meatlovers').limit(5);
 
-      final expected = '/pizza?filter[name]=meatlovers&limit=5';
+      final expected =
+          'http://127.0.0.1:8000/pizza?filter[name]=meatlovers&limit=5';
 
       expect(query.url(), expected);
     });
@@ -158,17 +162,18 @@ void main() {
     test('can_sort_the_query', () {
       query.sort(['-name', 'flavour']);
 
-      final expected = '/pizza?sort=-name,flavour';
+      final expected = 'http://127.0.0.1:8000/pizza?sort=-name,flavour';
 
       expect(query.url(), expected);
     });
 
     test('query_object_can_be_reused', () {
       final actualOne = query.where('name', 'macaroni_and_cheese').get();
-      final expectOne = '/pizza?filter[name]=macaroni_and_cheese';
+      final expectOne =
+          'http://127.0.0.1:8000/pizza?filter[name]=macaroni_and_cheese';
 
       final actualTwo = query.where('name', 'meatlovers').get();
-      final expectedTwo = '/pizza?filter[name]=meatlovers';
+      final expectedTwo = 'http://127.0.0.1:8000/pizza?filter[name]=meatlovers';
 
       expect(actualOne, expectOne);
       expect(actualTwo, expectedTwo);
@@ -177,7 +182,7 @@ void main() {
     test('can_paginate_the query', () {
       query.limit(5).page(2);
 
-      final expected = '/pizza?page=2&limit=5';
+      final expected = 'http://127.0.0.1:8000/pizza?page=2&limit=5';
 
       expect(query.url(), expected);
     });
@@ -189,6 +194,19 @@ void main() {
         expect(e.toString(),
             'Please call the for() method before adding filters or calling url() / get().');
       }
+    });
+
+    test('build_query_with_all_filters', () {
+      query
+          .where('name', 'macaroni_and_chesse')
+          .includes('toppings')
+          .appends('full_name')
+          .select(['name', 'ratings']);
+
+      final expected =
+          'http://127.0.0.1:8000/pizza?includes=toppings&append=full_name&fields[pizza]=name,ratings&filter[name]=macaroni_and_chesse';
+
+      expect(query.get(), expected);
     });
   });
 }
