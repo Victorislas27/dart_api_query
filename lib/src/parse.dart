@@ -51,7 +51,7 @@ class Parser {
   fields() {
     if (query.fields.length > 0) {
       final fields = {
-        '${query.queryParameters['fields']}[${query.model}]': query.fields
+        '${query.queryParameters['fields']}[${query.resource()}]': query.fields
       };
 
       final ob = SimplifiedUri.objectToQueryString(fields);
