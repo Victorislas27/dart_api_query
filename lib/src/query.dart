@@ -48,7 +48,7 @@ abstract class Query {
     return this;
   }
 
-  customs(model) {
+  custom(model) {
     this.model = model;
 
     return this;
@@ -57,7 +57,6 @@ abstract class Query {
   get() {
     final urlBase = baseUrl();
     if (urlBase != '') {
-      reset();
       return urlBase + parseQuery();
     }
 

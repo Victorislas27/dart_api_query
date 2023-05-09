@@ -197,7 +197,7 @@ void main() {
     });
 
     test('build_custom_query', () {
-      query.customs('vegetarian');
+      query.custom('vegetarian');
       query.where('topping', 'carrot');
 
       final expected =
