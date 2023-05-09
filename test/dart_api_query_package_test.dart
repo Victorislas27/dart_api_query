@@ -196,6 +196,16 @@ void main() {
       }
     });
 
+    test('build_custom_query', () {
+      query.customs('vegetarian');
+      query.where('topping', 'carrot');
+
+      final expected =
+          'http://127.0.0.1:8000/vegetarian?filter[topping]=carrot';
+
+      expect(query.get(), expected);
+    });
+
     test('build_query_with_all_filters', () {
       query
           .where('name', 'macaroni_and_chesse')

@@ -4,7 +4,6 @@ import 'package:dart_api_query_package/src/parse.dart';
 
 abstract class Query {
   var model;
-  var baseUrl;
   var queryParameters;
   var options = {};
   var include;
@@ -18,8 +17,6 @@ abstract class Query {
   var parser;
 
   Query([options]) {
-    model = null;
-    baseUrl = null;
     queryParameters = {
       'filters': 'filter',
       'fields': 'fields',
@@ -30,6 +27,7 @@ abstract class Query {
       'sort': 'sort'
     };
 
+    model = null;
     include = [];
     append = [];
     sorts = [];
@@ -42,10 +40,25 @@ abstract class Query {
     parser = Parser(this);
   }
 
+  baseUrl() {
+    return this;
+  }
+
+  resource() {
+    return this;
+  }
+
+  customs(model) {
+    this.model = model;
+
+    return this;
+  }
+
   get() {
-    if (baseUrl != '') {
+    final urlBase = baseUrl();
+    if (urlBase != '') {
       reset();
-      return baseUrl + parseQuery();
+      return urlBase + parseQuery();
     }
 
     reset();
@@ -61,12 +74,13 @@ abstract class Query {
   }
 
   parseQuery() {
-    if (model == '') {
-      throw Exception(
-          'Please call the for() method before adding filters or calling url() / get().');
+    final queryModel = resource();
+    if (model == '' || model == null) {
+      reset();
+      return '/$queryModel${parser.parse()}';
+    } else {
+      return '/$model${parser.parse()}';
     }
-
-    return '/$model${parser.parse()}';
   }
 
   includes(include) {
