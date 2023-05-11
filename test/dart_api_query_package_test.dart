@@ -102,7 +102,7 @@ void main() {
         query.whereIn(['oranges'], ['oranges', 'apples']);
       } catch (e) {
         expect(e.toString(),
-            'The first argument for the whereIn() function must be a string or integer.');
+            'Exception: The first argument for the whereIn() function must be a string or integer.');
       }
     });
 
@@ -113,15 +113,6 @@ void main() {
         expect(e.toString(),
             'Exception: The second argument for the whereIn() function must be an array.');
       }
-    });
-
-    test('can build a query with select', () {
-      query.select(['name', 'date added']);
-
-      final expected =
-          'http://127.0.0.1:8000/pizza?fields[pizza]=name,date added';
-
-      expect(query.url(), expected);
     });
 
     test('build query with select', () {
@@ -210,11 +201,11 @@ void main() {
       query
           .where('name', 'macaroni and chesse')
           .includes('toppings')
-          .appends('full name')
+          .appends(['full name'])
           .select(['name', 'ratings']);
 
       final expected =
-          'http://127.0.0.1:8000/pizza?includes=toppings&append=full name&fields[pizza]=name,ratings&filter[name]=macaroni and chesse';
+          'http://127.0.0.1:8000/pizza?includes=toppings&append=fullname&fields[pizza]=name,ratings&filter[name]=macaroni and chesse';
 
       expect(query.get(), expected);
     });

@@ -1,20 +1,17 @@
-// ignore_for_file: prefer_typing_uninitialized_variables
-
-import 'package:dart_api_query_package/src/parse.dart';
+import 'package:dart_api_query_package/utils/stringify.dart';
 
 abstract class Query {
-  var model;
-  var queryParameters;
-  var options = {};
-  var include;
-  var append;
-  var sorts;
-  var fields;
-  var filters;
-  var pageValue;
-  var limitValue;
-  var paramsObj;
-  var parser;
+  late String model;
+  late Map<String, String> queryParameters;
+  Map<String, String> options = {};
+  late String include;
+  late List append;
+  late List<String> sorts;
+  late String fields;
+  late Map<String, String> filters;
+  late int? pageValue;
+  late int? limitValue;
+  late String uri;
 
   Query([options]) {
     queryParameters = {
@@ -27,17 +24,98 @@ abstract class Query {
       'sort': 'sort'
     };
 
-    model = null;
-    include = [];
+    uri = '';
+    model = '';
+    include = '';
     append = [];
     sorts = [];
-    fields = {};
+    fields = '';
     filters = {};
     pageValue = null;
     limitValue = null;
-    paramsObj = null;
+  }
 
-    parser = Parser(this);
+  parse() {
+    parseIncludes();
+    parseAppends();
+    parseFields();
+    parseFilters();
+    parseSorts();
+    parsePage();
+    parseLimit();
+
+    return uri;
+  }
+
+  String prepend() {
+    final url = uri == '' ? '?' : '&';
+    return url;
+  }
+
+  parseIncludes() {
+    if (include.isNotEmpty) {
+      uri += '${prepend()}${queryParameters['includes']}=${include.toString()}';
+    }
+    return;
+  }
+
+  parseAppends() {
+    if (append.isNotEmpty) {
+      uri +=
+          '${prepend().toString()}${queryParameters['appends']}=${append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+    }
+
+    return;
+  }
+
+  parseFields() {
+    if (fields.isNotEmpty) {
+      final fields = {
+        '${queryParameters['fields']}[${resource()}]': this.fields
+      };
+
+      final ob = SimplifiedUri.objectToQueryString(fields);
+
+      uri += prepend() + ob;
+    }
+
+    return;
+  }
+
+  parseFilters() {
+    if (filters.isNotEmpty) {
+      final filters = {queryParameters['filters']: this.filters};
+
+      final ob = SimplifiedUri.objectToQueryString(filters);
+
+      uri += prepend() + ob;
+    }
+
+    return;
+  }
+
+  parseSorts() {
+    if (sorts.isNotEmpty) {
+      uri +=
+          '${prepend().toString()}${queryParameters['sort']}=${sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+    }
+
+    return;
+  }
+
+  parsePage() {
+    if (pageValue == null) {
+      return;
+    }
+
+    uri += '${prepend().toString()}${queryParameters['page']}=$pageValue';
+  }
+
+  parseLimit() {
+    if (limitValue == null) {
+      return;
+    }
+    uri += '${prepend().toString()}${queryParameters['limit']}=$limitValue';
   }
 
   baseUrl() {
@@ -69,23 +147,23 @@ abstract class Query {
   }
 
   reset() {
-    parser.uri = '';
+    uri = '';
   }
 
   parseQuery() {
     final queryModel = resource();
-    if (model == '' || model == null) {
+    if (model == '') {
       reset();
-      return '/$queryModel${parser.parse()}';
+      return '/$queryModel${parse()}';
     } else {
-      return '/$model${parser.parse()}';
+      return '/$model${parse()}';
     }
   }
 
   includes(include) {
     if (include.length == null) {
       throw Exception(
-          'The ${queryParameters.includes}s() function takes at least one argument.');
+          'The ${queryParameters['includes']}s() function takes at least one argument.');
     }
 
     this.include = include;
@@ -96,7 +174,7 @@ abstract class Query {
   appends(append) {
     if (append.length == null) {
       throw Exception(
-          'The ${queryParameters.appends}s() function takes at least one argument.');
+          'The ${queryParameters['appends']}s() function takes at least one argument.');
     }
 
     this.append = append;
@@ -111,7 +189,7 @@ abstract class Query {
 
     if (fields.length == 0) {
       throw Exception(
-          'The ${queryParameters.fields}() function takes a single argument of an array.');
+          'The ${queryParameters['fields']}() function takes a single argument of an array.');
     }
 
     if (fields[0].runtimeType == String ||
@@ -147,7 +225,7 @@ abstract class Query {
           'The whereIn() function takes 2 arguments of (string, array).');
     }
 
-    if (key.runtimeType == Object || key.runtimeType == List) {
+    if (key.runtimeType == Object || key.runtimeType == List<String>) {
       throw Exception(
           'The first argument for the whereIn() function must be a string or integer.');
     }
