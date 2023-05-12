@@ -9,14 +9,6 @@ void main() {
     setUp(() {
       query = Pizza();
     });
-    test('throws exception if target not included', () {
-      try {
-        query.includes('toppings');
-      } catch (e) {
-        expect(e.toString(),
-            'Please call the for() method before adding filters or calling url() / get().');
-      }
-    });
 
     test('build a query with appends method', () {
       query.appends(['full_name', 'rating']);
@@ -31,12 +23,14 @@ void main() {
         query.appends([]);
       } catch (e) {
         expect(e.toString(),
-            'The appends() function takes at least one argument.');
+            'Exception: The appends() function takes at least one argument.');
+        return;
       }
+      throw Exception("There was no Exception expected thrown.");
     });
 
     test('build query with includes', () {
-      query.includes('toppings');
+      query.includes(['toppings']);
 
       final expected = 'http://127.0.0.1:8000/pizza?includes=toppings';
 
@@ -45,11 +39,12 @@ void main() {
 
     test('throws exception with includes not passed', () {
       try {
-        query.includes('');
+        query.includes(['']);
       } catch (e) {
-        expect(e.toString(),
-            'The includes() function takes at least one argument.');
+        expect(e.toString(), 'Exception: The includes() should not be empty.');
+        return;
       }
+      throw Exception("There was no Exception expected thrown.");
     });
 
     test('can query with where', () {
@@ -75,8 +70,10 @@ void main() {
         query.where('topping', '');
       } catch (e) {
         expect(e.toString(),
-            'Exception: The where() function takes 2 arguments both of string values.');
+            'Exception: The where() function takes 2 not empty strings.');
+        return;
       }
+      throw Exception("There was no Exception expected thrown.");
     });
 
     test('can build query with whereIn', () {
@@ -90,29 +87,13 @@ void main() {
 
     test('throws exception with whereIn no arguments passed', () {
       try {
-        query.whereIn('', '');
+        query.whereIn('', ['']);
       } catch (e) {
         expect(e.toString(),
-            'Exception: The whereIn() function takes 2 arguments of (string, array).');
+            'Exception: The whereIn() function expects not empty key and not empty list.');
+        return;
       }
-    });
-
-    test('throws exeception if first argument invalid', () {
-      try {
-        query.whereIn(['oranges'], ['oranges', 'apples']);
-      } catch (e) {
-        expect(e.toString(),
-            'Exception: The first argument for the whereIn() function must be a string or integer.');
-      }
-    });
-
-    test('throws exeception if second argument invalid', () {
-      try {
-        query.whereIn('oranges', {'oranges', 'apples'});
-      } catch (e) {
-        expect(e.toString(),
-            'Exception: The second argument for the whereIn() function must be an array.');
-      }
+      throw Exception("There was no Exception expected thrown.");
     });
 
     test('build query with select', () {
@@ -128,17 +109,10 @@ void main() {
         query.select(['']);
       } catch (e) {
         expect(e.toString(),
-            'The fields() function takes a single argument of an array.');
+            'Exception: The select() function must must not be Empty.');
+        return;
       }
-    });
-
-    test('throws exception with no array argument passed in select', () {
-      try {
-        query.select('');
-      } catch (e) {
-        expect(
-            e.toString(), 'Exception: The select() function must be an array');
-      }
+      throw Exception("There was no Exception expected thrown.");
     });
 
     test('can limit the query', () {
@@ -158,12 +132,23 @@ void main() {
       expect(query.url(), expected);
     });
 
+    test('can sort the throws exception with bad sorts', () {
+      try {
+        query.sort(['']);
+      } catch (e) {
+        expect(e.toString(),
+            'Exception: The sort() function expects not empty values.');
+        return;
+      }
+      throw Exception("There was no Exception expected thrown.");
+    });
+
     test('query object can be reused', () {
-      final actualOne = query.where('name', 'macaroni and cheese').get();
+      final actualOne = query.where('name', 'macaroni and cheese').url();
       final expectOne =
           'http://127.0.0.1:8000/pizza?filter[name]=macaroni and cheese';
 
-      final actualTwo = query.where('name', 'meatlovers').get();
+      final actualTwo = query.where('name', 'meatlovers').url();
       final expectedTwo = 'http://127.0.0.1:8000/pizza?filter[name]=meatlovers';
 
       expect(actualOne, expectOne);
@@ -178,15 +163,6 @@ void main() {
       expect(query.url(), expected);
     });
 
-    test('throws error target not included', () {
-      try {
-        query.includes('toppings').url();
-      } catch (e) {
-        expect(e.toString(),
-            'Please call the for() method before adding filters or calling url() / get().');
-      }
-    });
-
     test('build custom query', () {
       query.custom('vegetarian');
       query.where('topping', 'carrot');
@@ -194,20 +170,20 @@ void main() {
       final expected =
           'http://127.0.0.1:8000/vegetarian?filter[topping]=carrot';
 
-      expect(query.get(), expected);
+      expect(query.url(), expected);
     });
 
     test('build query with all filters', () {
       query
           .where('name', 'macaroni and chesse')
-          .includes('toppings')
-          .appends(['full name'])
-          .select(['name', 'ratings']);
+          .where('username', 'my-username')
+          .includes(['toppings', 'another-toppings']).appends(
+              ['full name', 'other']).select(['name', 'ratings']);
 
       final expected =
-          'http://127.0.0.1:8000/pizza?includes=toppings&append=fullname&fields[pizza]=name,ratings&filter[name]=macaroni and chesse';
+          'http://127.0.0.1:8000/pizza?includes=toppings,another-toppings&append=fullname,other&fields[pizza]=name,ratings&filter[name]=macaroni and chesse&filter[username]=my-username';
 
-      expect(query.get(), expected);
+      expect(query.url(), expected);
     });
   });
 }

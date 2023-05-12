@@ -2,9 +2,9 @@ import 'package:dart_api_query_package/utils/stringify.dart';
 
 abstract class Query {
   late String _model;
-  late Map<String, String> queryParameters;
-  late String _include;
-  late List _append;
+  late Map<String, String> _queryParameters;
+  late List<String> _include;
+  late List<String> _append;
   late List<String> _sorts;
   late String _fields;
   late Map<String, String> _filters;
@@ -13,7 +13,7 @@ abstract class Query {
   late String _uri;
 
   Query() {
-    queryParameters = {
+    _queryParameters = {
       'filters': 'filter',
       'fields': 'fields',
       'includes': 'includes',
@@ -25,7 +25,7 @@ abstract class Query {
 
     _uri = '';
     _model = '';
-    _include = '';
+    _include = [];
     _append = [];
     _sorts = [];
     _fields = '';
@@ -33,6 +33,9 @@ abstract class Query {
     _pageValue = null;
     _limitValue = null;
   }
+
+  /// abstract method that should be implemented by model.
+  String baseUrl();
 
   _parse() {
     _parseIncludes();
@@ -53,14 +56,14 @@ abstract class Query {
   void _parseIncludes() {
     if (_include.isNotEmpty) {
       _uri +=
-          '${prepend()}${queryParameters['includes']}=${_include.toString()}';
+          '${prepend()}${_queryParameters['includes']}=${_include.join(',')}';
     }
   }
 
   void _parseAppends() {
     if (_append.isNotEmpty) {
       _uri +=
-          '${prepend().toString()}${queryParameters['appends']}=${_append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+          '${prepend().toString()}${_queryParameters['appends']}=${_append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
     }
   }
 
@@ -68,7 +71,7 @@ abstract class Query {
     if (_fields.isNotEmpty) {
       _uri += prepend() +
           SimplifiedUri.objectToQueryString(
-              {'${queryParameters['fields']}[${resource()}]': _fields});
+              {'${_queryParameters['fields']}[${resource()}]': _fields});
     }
   }
 
@@ -76,38 +79,32 @@ abstract class Query {
     if (_filters.isNotEmpty) {
       _uri += prepend() +
           SimplifiedUri.objectToQueryString(
-              {queryParameters['filters']: _filters});
+              {_queryParameters['filters']: _filters});
     }
   }
 
   void _parseSorts() {
     if (_sorts.isNotEmpty) {
       _uri +=
-          '${prepend().toString()}${queryParameters['sort']}=${_sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+          '${prepend().toString()}${_queryParameters['sort']}=${_sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
     }
   }
 
   void _parsePage() {
-    if (_pageValue == null) {
-      return;
+    if (_pageValue != null) {
+      _uri += '${prepend().toString()}${_queryParameters['page']}=$_pageValue';
     }
-
-    _uri += '${prepend().toString()}${queryParameters['page']}=$_pageValue';
   }
 
   void _parseLimit() {
-    if (_limitValue == null) {
-      return;
+    if (_limitValue != null) {
+      _uri +=
+          '${prepend().toString()}${_queryParameters['limit']}=$_limitValue';
     }
-    _uri += '${prepend().toString()}${queryParameters['limit']}=$_limitValue';
-  }
-
-  String baseUrl() {
-    return baseUrl();
   }
 
   String resource() {
-    return resource();
+    return '';
   }
 
   String custom(model) {
@@ -116,18 +113,13 @@ abstract class Query {
     return _model;
   }
 
-  String get() {
+  String url() {
     final urlBase = baseUrl();
     if (urlBase != '') {
       return urlBase + parseQuery();
     }
-
     reset();
     return parseQuery();
-  }
-
-  String url() {
-    return get();
   }
 
   void reset() {
@@ -135,19 +127,18 @@ abstract class Query {
   }
 
   String parseQuery() {
-    final queryModel = resource();
     if (_model == '') {
       reset();
-      return '/$queryModel${_parse()}';
-    } else {
-      return '/$_model${_parse()}';
+      return '/${resource()}${_parse()}';
     }
+    return '/$_model${_parse()}';
   }
 
-  Query includes(include) {
-    if (include.length == null) {
+  Query includes(List<String> include) {
+    include.removeWhere((item) => item.isEmpty);
+    if (include.isEmpty) {
       throw Exception(
-          'The ${queryParameters['includes']}s() function takes at least one argument.');
+          'The ${_queryParameters['includes']}() should not be empty.');
     }
 
     _include = include;
@@ -155,10 +146,11 @@ abstract class Query {
     return this;
   }
 
-  Query appends(append) {
-    if (append.length == null) {
+  Query appends(List<String> append) {
+    append.removeWhere((item) => item.isEmpty);
+    if (append.isEmpty) {
       throw Exception(
-          'The ${queryParameters['appends']}s() function takes at least one argument.');
+          'The ${_queryParameters['appends']}s() function takes at least one argument.');
     }
 
     _append = append;
@@ -166,36 +158,19 @@ abstract class Query {
     return this;
   }
 
-  List<String> select(fields) {
-    if (fields == null || fields.runtimeType != List<String>) {
-      throw Exception('The select() function must be an array');
+  List<String> select(List<String> fields) {
+    fields.removeWhere((item) => item.isEmpty);
+    if (fields.isEmpty) {
+      throw Exception('The select() function must must not be Empty.');
     }
-
-    if (fields.length == 0) {
-      throw Exception(
-          'The ${queryParameters['fields']}() function takes a single argument of an array.');
-    }
-
-    if (fields[0].runtimeType == String ||
-        fields[0].runtimeType == List<String>) {
-      _fields = fields.join(',');
-    }
-    if (fields[0].runtimeType == Object) {
-      (fields[0]).forEach(([key, value]) => {fields[key] = value.join(',')});
-    }
+    _fields = fields.join(',');
 
     return fields;
   }
 
-  Query where(key, value) {
-    if (key == '' || value == '') {
-      throw Exception(
-          'The where() function takes 2 arguments both of string values.');
-    }
-
-    if (value.runtimeType == Object || value.runtimeType == List<String>) {
-      throw Exception(
-          'The second argument to the where() function must be a string. Use whereIn() if you need to pass in an array.');
+  Query where(String key, String value) {
+    if (key.isEmpty || value.isEmpty) {
+      throw Exception('The where() function takes 2 not empty strings.');
     }
 
     _filters[key] = value;
@@ -203,46 +178,30 @@ abstract class Query {
     return this;
   }
 
-  void whereIn(key, array) {
-    if (key == '' || array == '') {
+  void whereIn(String key, List<String> list) {
+    list.removeWhere((item) => item.isEmpty);
+    if (key == '' || list.isEmpty) {
       throw Exception(
-          'The whereIn() function takes 2 arguments of (string, array).');
+          'The whereIn() function expects not empty key and not empty list.');
     }
-
-    if (key.runtimeType == Object || key.runtimeType == List<String>) {
-      throw Exception(
-          'The first argument for the whereIn() function must be a string or integer.');
-    }
-
-    if (array.runtimeType != List<String>) {
-      throw Exception(
-          'The second argument for the whereIn() function must be an array.');
-    }
-
-    _filters[key] = array.join(',');
+    _filters[key] = list.join(',');
   }
 
-  void sort(args) {
+  void sort(List<String> args) {
+    args.removeWhere((item) => item.isEmpty);
+    if (args.isEmpty) {
+      throw Exception('The sort() function expects not empty values.');
+    }
     _sorts = args;
   }
 
-  Query page(value) {
-    if (value.runtimeType != int) {
-      throw Exception(
-          'The page() function takes a single argument of a number');
-    }
-
+  Query page(int value) {
     _pageValue = value;
 
     return this;
   }
 
-  Query limit(value) {
-    if (value.runtimeType != int) {
-      throw Exception(
-          'The limit() function takes a single argument of a number.');
-    }
-
+  Query limit(int value) {
     _limitValue = value;
 
     return this;
