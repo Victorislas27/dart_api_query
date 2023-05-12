@@ -1,19 +1,18 @@
 import 'package:dart_api_query_package/utils/stringify.dart';
 
 abstract class Query {
-  late String model;
+  late String _model;
   late Map<String, String> queryParameters;
-  Map<String, String> options = {};
-  late String include;
-  late List append;
-  late List<String> sorts;
-  late String fields;
-  late Map<String, String> filters;
-  late int? pageValue;
-  late int? limitValue;
-  late String uri;
+  late String _include;
+  late List _append;
+  late List<String> _sorts;
+  late String _fields;
+  late Map<String, String> _filters;
+  late int? _pageValue;
+  late int? _limitValue;
+  late String _uri;
 
-  Query([options]) {
+  Query() {
     queryParameters = {
       'filters': 'filter',
       'fields': 'fields',
@@ -24,115 +23,100 @@ abstract class Query {
       'sort': 'sort'
     };
 
-    uri = '';
-    model = '';
-    include = '';
-    append = [];
-    sorts = [];
-    fields = '';
-    filters = {};
-    pageValue = null;
-    limitValue = null;
+    _uri = '';
+    _model = '';
+    _include = '';
+    _append = [];
+    _sorts = [];
+    _fields = '';
+    _filters = {};
+    _pageValue = null;
+    _limitValue = null;
   }
 
-  parse() {
-    parseIncludes();
-    parseAppends();
-    parseFields();
-    parseFilters();
-    parseSorts();
-    parsePage();
-    parseLimit();
+  _parse() {
+    _parseIncludes();
+    _parseAppends();
+    _parseFields();
+    _parseFilters();
+    _parseSorts();
+    _parsePage();
+    _parseLimit();
 
-    return uri;
+    return _uri;
   }
 
   String prepend() {
-    final url = uri == '' ? '?' : '&';
-    return url;
+    return _uri == '' ? '?' : '&';
   }
 
-  parseIncludes() {
-    if (include.isNotEmpty) {
-      uri += '${prepend()}${queryParameters['includes']}=${include.toString()}';
+  void _parseIncludes() {
+    if (_include.isNotEmpty) {
+      _uri +=
+          '${prepend()}${queryParameters['includes']}=${_include.toString()}';
     }
-    return;
   }
 
-  parseAppends() {
-    if (append.isNotEmpty) {
-      uri +=
-          '${prepend().toString()}${queryParameters['appends']}=${append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+  void _parseAppends() {
+    if (_append.isNotEmpty) {
+      _uri +=
+          '${prepend().toString()}${queryParameters['appends']}=${_append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
     }
-
-    return;
   }
 
-  parseFields() {
-    if (fields.isNotEmpty) {
-      final fields = {
-        '${queryParameters['fields']}[${resource()}]': this.fields
-      };
-
-      final ob = SimplifiedUri.objectToQueryString(fields);
-
-      uri += prepend() + ob;
+  void _parseFields() {
+    if (_fields.isNotEmpty) {
+      _uri += prepend() +
+          SimplifiedUri.objectToQueryString(
+              {'${queryParameters['fields']}[${resource()}]': _fields});
     }
-
-    return;
   }
 
-  parseFilters() {
-    if (filters.isNotEmpty) {
-      final filters = {queryParameters['filters']: this.filters};
-
-      final ob = SimplifiedUri.objectToQueryString(filters);
-
-      uri += prepend() + ob;
+  void _parseFilters() {
+    if (_filters.isNotEmpty) {
+      _uri += prepend() +
+          SimplifiedUri.objectToQueryString(
+              {queryParameters['filters']: _filters});
     }
-
-    return;
   }
 
-  parseSorts() {
-    if (sorts.isNotEmpty) {
-      uri +=
-          '${prepend().toString()}${queryParameters['sort']}=${sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+  void _parseSorts() {
+    if (_sorts.isNotEmpty) {
+      _uri +=
+          '${prepend().toString()}${queryParameters['sort']}=${_sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
     }
-
-    return;
   }
 
-  parsePage() {
-    if (pageValue == null) {
+  void _parsePage() {
+    if (_pageValue == null) {
       return;
     }
 
-    uri += '${prepend().toString()}${queryParameters['page']}=$pageValue';
+    _uri += '${prepend().toString()}${queryParameters['page']}=$_pageValue';
   }
 
-  parseLimit() {
-    if (limitValue == null) {
+  void _parseLimit() {
+    if (_limitValue == null) {
       return;
     }
-    uri += '${prepend().toString()}${queryParameters['limit']}=$limitValue';
+    _uri += '${prepend().toString()}${queryParameters['limit']}=$_limitValue';
   }
 
-  baseUrl() {
-    return this;
+  String baseUrl() {
+    return baseUrl();
   }
 
-  resource() {
-    return this;
+  String resource() {
+    return resource();
   }
 
-  custom(model) {
-    this.model = model;
+  String custom(model) {
+    _model = model;
 
-    return this;
+    return _model;
   }
 
-  get() {
+  String get() {
     final urlBase = baseUrl();
     if (urlBase != '') {
       return urlBase + parseQuery();
@@ -142,47 +126,47 @@ abstract class Query {
     return parseQuery();
   }
 
-  url() {
+  String url() {
     return get();
   }
 
-  reset() {
-    uri = '';
+  void reset() {
+    _uri = '';
   }
 
-  parseQuery() {
+  String parseQuery() {
     final queryModel = resource();
-    if (model == '') {
+    if (_model == '') {
       reset();
-      return '/$queryModel${parse()}';
+      return '/$queryModel${_parse()}';
     } else {
-      return '/$model${parse()}';
+      return '/$_model${_parse()}';
     }
   }
 
-  includes(include) {
+  Query includes(include) {
     if (include.length == null) {
       throw Exception(
           'The ${queryParameters['includes']}s() function takes at least one argument.');
     }
 
-    this.include = include;
+    _include = include;
 
     return this;
   }
 
-  appends(append) {
+  Query appends(append) {
     if (append.length == null) {
       throw Exception(
           'The ${queryParameters['appends']}s() function takes at least one argument.');
     }
 
-    this.append = append;
+    _append = append;
 
     return this;
   }
 
-  select(fields) {
+  List<String> select(fields) {
     if (fields == null || fields.runtimeType != List<String>) {
       throw Exception('The select() function must be an array');
     }
@@ -194,16 +178,16 @@ abstract class Query {
 
     if (fields[0].runtimeType == String ||
         fields[0].runtimeType == List<String>) {
-      this.fields = fields.join(',');
+      _fields = fields.join(',');
     }
     if (fields[0].runtimeType == Object) {
       (fields[0]).forEach(([key, value]) => {fields[key] = value.join(',')});
     }
 
-    return this;
+    return fields;
   }
 
-  where(key, value) {
+  Query where(key, value) {
     if (key == '' || value == '') {
       throw Exception(
           'The where() function takes 2 arguments both of string values.');
@@ -214,12 +198,12 @@ abstract class Query {
           'The second argument to the where() function must be a string. Use whereIn() if you need to pass in an array.');
     }
 
-    filters[key] = value;
+    _filters[key] = value;
 
     return this;
   }
 
-  whereIn(key, array) {
+  void whereIn(key, array) {
     if (key == '' || array == '') {
       throw Exception(
           'The whereIn() function takes 2 arguments of (string, array).');
@@ -235,33 +219,31 @@ abstract class Query {
           'The second argument for the whereIn() function must be an array.');
     }
 
-    filters[key] = array.join(',');
+    _filters[key] = array.join(',');
   }
 
-  sort(args) {
-    sorts = args;
-
-    return this;
+  void sort(args) {
+    _sorts = args;
   }
 
-  page(value) {
+  Query page(value) {
     if (value.runtimeType != int) {
       throw Exception(
           'The page() function takes a single argument of a number');
     }
 
-    pageValue = value;
+    _pageValue = value;
 
     return this;
   }
 
-  limit(value) {
+  Query limit(value) {
     if (value.runtimeType != int) {
       throw Exception(
           'The limit() function takes a single argument of a number.');
     }
 
-    limitValue = value;
+    _limitValue = value;
 
     return this;
   }
