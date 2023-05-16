@@ -1,6 +1,6 @@
-import 'model.dart';
+import 'base_model.dart';
 
-class Pizza extends Model {
+class Pizza extends BaseModel {
   @override
   resource() {
     return 'pizza';

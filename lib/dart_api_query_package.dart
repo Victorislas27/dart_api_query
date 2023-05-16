@@ -3,6 +3,6 @@
 /// More dartdocs go here.
 library dart_query_builder;
 
-export 'src/query.dart';
+export 'src/builder.dart';
 
 // TODO: Export any libraries intended for clients of this package.
