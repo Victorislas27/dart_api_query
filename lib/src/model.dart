@@ -3,8 +3,8 @@ import 'package:dart_api_query_package/src/static_model.dart';
 
 class Model extends StaticModel {
   late final Builder builder;
-  late final String _fromResource;
-  late final String _customResource;
+
+  late String _customResource;
 
   Model() : super() {
     builder = Builder(this);
@@ -30,37 +30,10 @@ class Model extends StaticModel {
     };
   }
 
-  void custom(List<dynamic> args) {
-    if (args.isEmpty) {
-      throw Exception('The custom() method takes a minimum of one argument.');
-    }
+  String custom(String args) {
+    _customResource = args;
 
-    String slash = '';
-    String resource = '';
-
-    for (var value in args) {
-      switch (value.runtimeType) {
-        case String:
-          resource += slash + (value as String).replaceAll(RegExp('^\\/'), '');
-          break;
-        case Model:
-          resource += slash + (value as Model).resource();
-
-          if ((value).isValidId((value).getPrimaryKey())) {
-            resource += '/${(value).getPrimaryKey()}';
-          }
-          break;
-        default:
-          throw Exception(
-              'Arguments to custom() must be strings or instances of Model.');
-      }
-
-      if (slash.isEmpty) {
-        slash = '/';
-      }
-    }
-
-    _customResource = resource;
+    return _customResource;
   }
 
   primaryKey() {
@@ -73,6 +46,16 @@ class Model extends StaticModel {
 
   isValidId(id) {
     return !!id;
+  }
+
+  String url() {
+    String base = '';
+
+    base = _customResource.isNotEmpty ? '${baseUrl()}/$_customResource' : base;
+
+    builder.reset();
+
+    return '$base${builder.query()}';
   }
 
   Model include(List<String> args) {
