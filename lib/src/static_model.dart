@@ -3,7 +3,7 @@ class StaticModel {
     return StaticModel();
   }
 
-  static config(config) {
+  static configs(config) {
     final self = instance();
     self.config(config);
 
@@ -101,6 +101,12 @@ class StaticModel {
     final self = instance();
 
     return self.get();
+  }
+
+  static orderBy(List<String> args) {
+    final self = instance();
+    self.orderBy(args);
+    return self;
   }
 
   static all() {

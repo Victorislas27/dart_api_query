@@ -1,5 +1,5 @@
 import 'package:dart_api_query_package/src/builder.dart';
-import 'package:dart_api_query_package/utils/stringify.dart';
+import 'package:dart_api_query_package/utils/stringify/stringify.dart';
 
 class Parser {
   late Builder builder;
@@ -18,8 +18,17 @@ class Parser {
     _parseSorts();
     _parsePage();
     _parseLimit();
+    _parsePayload();
 
     return uri;
+  }
+
+  String reset() {
+    return uri = '';
+  }
+
+  String prepend() {
+    return uri == '' ? '?' : '&';
   }
 
   bool hasIncludes() {
@@ -50,60 +59,80 @@ class Parser {
     return builder.limitValue != null;
   }
 
-  String prepend() {
-    return uri == '' ? '?' : '&';
+  bool hasPayload() {
+    return builder.payload.isNotEmpty;
+  }
+
+  parametersName() {
+    return builder.model.parameterNames();
   }
 
   void _parseIncludes() {
-    if (builder.include.isNotEmpty) {
-      uri +=
-          '${prepend()}${builder.queryParameters['includes']}=${builder.include.join(',')}';
+    if (!hasIncludes()) {
+      return;
     }
+
+    uri +=
+        '${prepend()}${parametersName()['include']}=${builder.include.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
   }
 
   void _parseAppends() {
-    if (builder.append.isNotEmpty) {
-      uri +=
-          '${prepend().toString()}${builder.queryParameters['appends']}=${builder.append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+    if (!hasAppends()) {
+      return;
     }
+
+    uri +=
+        '${prepend()}${parametersName()['append']}=${builder.append.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '').replaceAll('&', '')}';
   }
 
   void _parseFields() {
-    if (builder.fields.isNotEmpty) {
-      uri += prepend() +
-          SimplifiedUri.objectToQueryString({
-            '${builder.queryParameters['fields']}[${builder.model.runtimeType.toString().toLowerCase()}]':
-                builder.fields
-          });
+    if (!hasFields()) {
+      return;
     }
+
+    uri += prepend() +
+        stringify({parametersName()['fields']: builder.fields}, encode: false, arrayFormat: PrefixGenerators.comma);
   }
 
   void _parseFilters() {
-    if (builder.filters.isNotEmpty) {
-      uri += prepend() +
-          SimplifiedUri.objectToQueryString(
-              {builder.queryParameters['filters']: builder.filters});
+    if (!hasFilters()) {
+      return;
     }
+
+    uri += prepend() +
+        stringify({parametersName()['filter']: builder.filters}, encode: false, arrayFormat: PrefixGenerators.comma);
   }
 
   void _parseSorts() {
-    if (builder.sorts.isNotEmpty) {
-      uri +=
-          '${prepend().toString()}${builder.queryParameters['sort']}=${builder.sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
+    if (!hasSorts()) {
+      return;
     }
+
+    uri +=
+        '${prepend()}${parametersName()['sort']}=${builder.sorts.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(' ', '')}';
   }
 
   void _parsePage() {
-    if (builder.pageValue != null) {
-      uri +=
-          '${prepend().toString()}${builder.queryParameters['page']}=${builder.pageValue}';
+    if (!hasPage()) {
+      return;
     }
+
+    uri += '${prepend()}${parametersName()['page']}=${builder.pageValue}';
   }
 
   void _parseLimit() {
-    if (builder.limitValue != null) {
-      uri +=
-          '${prepend().toString()}${builder.queryParameters['limit']}=${builder.limitValue}';
+    if (!hasLimit()) {
+      return;
     }
+
+    uri += '${prepend()}${parametersName()['limit']}=${builder.limitValue}';
+  }
+
+  void _parsePayload() {
+    if (!hasPayload()) {
+      return;
+    }
+
+    uri += prepend() + stringify(builder.payload, encode: false, arrayFormat: PrefixGenerators.comma);
   }
 }

@@ -5,9 +5,4 @@ abstract class BaseModel extends Model {
   baseUrl() {
     return 'http://127.0.0.1:8000';
   }
-
-  @override
-  request(config) {
-    return $http.request(config);
-  }
 }

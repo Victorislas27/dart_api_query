@@ -3,36 +3,26 @@ import 'package:dart_api_query_package/src/parser.dart';
 
 class Builder {
   late Model model;
-  late Map<String, String> queryParameters;
   late List<String> include;
   late List<String> append;
   late List<String> sorts;
-  late String fields;
+  late Map<dynamic, dynamic> fields;
   late Map<String, String> filters;
   late int? pageValue;
   late int? limitValue;
-  late String customModel;
+  late Map<String, dynamic> payload;
+
   late Parser parser;
 
   Builder(this.model) {
-    queryParameters = {
-      'filters': 'filter',
-      'fields': 'fields',
-      'includes': 'includes',
-      'appends': 'append',
-      'page': 'page',
-      'limit': 'limit',
-      'sort': 'sort'
-    };
-
     include = [];
     append = [];
     sorts = [];
-    fields = '';
+    fields = {};
     filters = {};
     pageValue = null;
     limitValue = null;
-    customModel = '';
+    payload = {};
     parser = Parser(this);
   }
 
@@ -48,25 +38,10 @@ class Builder {
     return model.resource();
   }
 
-  String custom(args) {
-    customModel = args;
-
-    return customModel;
-  }
-
-  String parseQuery() {
-    if (customModel != '') {
-      return '/$customModel${parser.parse()}';
-    }
-    reset();
-    return '/${model.runtimeType.toString().toLowerCase()}${parser.parse()}';
-  }
-
   Builder includes(List<String> include) {
     include.removeWhere((item) => item.isEmpty);
     if (include.isEmpty) {
-      throw Exception(
-          'The ${queryParameters['includes']}() should not be empty.');
+      throw Exception('The includes() should not be empty.');
     }
 
     this.include = include;
@@ -77,8 +52,7 @@ class Builder {
   Builder appends(List<String> append) {
     append.removeWhere((item) => item.isEmpty);
     if (append.isEmpty) {
-      throw Exception(
-          'The ${queryParameters['appends']}s() function takes at least one argument.');
+      throw Exception('The appends() function takes at least one argument.');
     }
 
     this.append = append;
@@ -86,15 +60,10 @@ class Builder {
     return this;
   }
 
-  List<String> select(List<String> fields) {
-    fields.removeWhere((item) => item.isEmpty);
-    if (fields.isEmpty) {
-      throw Exception('The select() function must must not be Empty.');
-    }
+  Builder select(Map<String, dynamic> fields) {
+    this.fields.addAll(fields);
 
-    this.fields = fields.join(',');
-
-    return fields;
+    return this;
   }
 
   Builder where(String key, String value) {
@@ -116,13 +85,14 @@ class Builder {
     filters[key] = list.join(',');
   }
 
-  void sort(List<String> args) {
-    args.removeWhere((item) => item.isEmpty);
-    if (args.isEmpty) {
+  void orderBy(List<String> fields) {
+    fields.removeWhere((item) => item.isEmpty);
+    if (fields.isEmpty) {
       throw Exception('The sort() function expects not empty values.');
     }
-    sorts = args;
+    sorts = fields;
   }
+
 
   Builder page(int value) {
     pageValue = value;
@@ -132,6 +102,12 @@ class Builder {
 
   Builder limit(int value) {
     limitValue = value;
+
+    return this;
+  }
+
+  Builder params(Map<String, dynamic> args) {
+    payload = args;
 
     return this;
   }
