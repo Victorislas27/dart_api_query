@@ -5,7 +5,7 @@ import 'dummy/model_with_param_names.dart';
 import 'dummy/pizza.dart';
 
 void main() {
-  group('query builder tests', () {
+  group('query builder test', () {
     late Pizza query;
     setUp(() {
       query = Pizza();
