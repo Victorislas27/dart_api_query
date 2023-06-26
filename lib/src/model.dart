@@ -58,6 +58,10 @@ class Model extends StaticModel {
     return '$base${builder.query()}';
   }
 
+  String reset() {
+    return builder.reset();
+  }
+
   Model include(List<String> args) {
     builder.includes(args);
 
